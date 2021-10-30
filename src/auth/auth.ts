@@ -1,5 +1,6 @@
 import { NextFunction, Response, Request } from "express";
 import { MongoClient } from "mongodb";
+import User from "../models/User";
 
 const checkUserIdentity = async (
   client: MongoClient,
@@ -11,7 +12,7 @@ const checkUserIdentity = async (
   const apiKey = req.headers["x-fges-user-key"] as string;
 
   try {
-    const user = await users.findOne({ apiKey });
+    const user = await users.findOne<User>({ apiKey });
     if (!user) throw new Error("Wrong API key");
     return user;
   } catch (e) {

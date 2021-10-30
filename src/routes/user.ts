@@ -1,7 +1,7 @@
 import { Router } from "express";
 import checkUserIdentity from "../auth/auth";
 import connectToDb from "../DbUtils/connect";
-import Tweet from "../models/Tweet";
+import { Tweet } from "../models/Tweet";
 
 const mountUserTweetsRoute = (router: Router) => {
   router.get("/user/:userId/tweets", async (req, res, next) => {
