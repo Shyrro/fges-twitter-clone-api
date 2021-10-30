@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ObjectId } from "mongodb";
 import checkUserIdentity from "../auth/auth";
 import connectToDb from "../DbUtils/connect";
 import Tweet from "../models/Tweet";
@@ -38,8 +39,34 @@ const mountAllTweetsRoute = (router: Router) => {
   });
 };
 
+const mountPickTweetRoute = (router: Router) => {
+  router.get('/tweet/:id', async (req, res, next) => {
+    const client = await connectToDb();
+    await checkUserIdentity(client, req, res, next);
+
+    const tweetId = req.params.id;
+    const tweetsCollection = client
+      .db(process.env["DB_NAME"])
+      .collection("Tweets");
+
+    
+    let children = [];
+    tweetsCollection.find({ parent: tweetId }).toArray((err, result) => {
+      if (err) throw err;
+      children = result;
+    });
+    const tweet = await tweetsCollection.findOne({ _id: new ObjectId(tweetId) });
+
+    return res.json({
+      ...tweet,
+      children
+    });
+  });
+}
+
 const mountTweetRoutes = (router: Router) => {
   mountAllTweetsRoute(router);
+  mountPickTweetRoute(router);
 };
 
 export default mountTweetRoutes;
