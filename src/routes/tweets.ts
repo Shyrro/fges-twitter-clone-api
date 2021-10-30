@@ -1,23 +1,13 @@
 import { Router } from "express";
-import { ConnectionCheckOutFailedEvent } from "mongodb";
 import checkUserIdentity from "../auth/auth";
 import connectToDb from "../DbUtils/connect";
 import Tweet from "../models/Tweet";
 
 const mountAllTweetsRoute = (router: Router) => {
   router.get("/allTweets", async (req, res, next) => {
-    const userId = req.headers["x-fges-user"] as string;
     const client = await connectToDb();
 
-    try {
-      await checkUserIdentity(client, userId);
-    } catch (e) {
-      res.status(401).send({
-        error: `UserId: '${userId}' in header "x-fges-user" is not authorized. `,
-      });
-
-      return next(e);
-    }
+    await checkUserIdentity(client, req, res, next);
 
     const allTweetsCollection = client
       .db(process.env["DB_NAME"])
@@ -28,13 +18,15 @@ const mountAllTweetsRoute = (router: Router) => {
 
       const rootTweets = tweets.filter((tweet) => tweet.parent === "");
       const formattedTweets = rootTweets.map((tweet) => {
-        const children = tweets.filter((childTweet) => childTweet.parent === tweet._id.toString());
+        const children = tweets.filter(
+          (childTweet) => childTweet.parent === tweet._id.toString()
+        );
         const formmattedChildren = children.map((child) => {
-            const formattedChild = { ...child };
-            delete formattedChild.parent;
+          const formattedChild = { ...child };
+          delete formattedChild.parent;
 
-            return formattedChild;
-        })
+          return formattedChild;
+        });
         return {
           ...tweet,
           children: formmattedChildren,

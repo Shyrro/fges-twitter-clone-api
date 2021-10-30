@@ -1,14 +1,26 @@
-import { MongoClient, ObjectId } from "mongodb";
+import { NextFunction, Response, Request } from "express";
+import { MongoClient } from "mongodb";
 
-const checkUserIdentity = async (client: MongoClient, userId: string) => {
+const checkUserIdentity = async (
+  client: MongoClient,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const users = client.db(process.env["DB_NAME"]).collection("Users");
+  const apiKey = req.headers["x-fges-user-key"] as string;
 
-  return users
-    .findOne({ _id: new ObjectId(userId) })
-    .then((user) => user)
-    .catch((e) => {
-      throw e;
+  try {
+    const user = await users.findOne({ apiKey });
+    if (!user) throw new Error("Wrong API key");
+    return user;
+  } catch (e) {
+    res.status(401).send({
+      error: `Api-Key: '${apiKey}' in header 'x-fges-user-key' is not a valid key.`,
     });
+
+    return next(e);
+  }
 };
 
 export default checkUserIdentity;
