@@ -1,11 +1,11 @@
+import { Application } from "express";
 import { ObjectId } from "mongodb";
 import checkUserIdentity from "../auth/auth";
 import connectToDb from "../DbUtils/connect";
-import bodyParser from "body-parser";
-import { Tweet, TweetRequest } from "../models/Tweet";
+import { Tweet } from "../models/Tweet";
 import User from "../models/User";
 
-const mountAllTweetsRoute = (app) => {
+const mountAllTweetsRoute = (app: Application) => {
   app.get("/allTweets", async (req, res, next) => {
     const client = await connectToDb();
     await checkUserIdentity(client, req, res, next);
@@ -39,7 +39,7 @@ const mountAllTweetsRoute = (app) => {
   });
 };
 
-const mountPickTweetRoute = (app) => {
+const mountPickTweetRoute = (app: Application) => {
   app.get("/tweet/:id", async (req, res, next) => {
     const client = await connectToDb();
     await checkUserIdentity(client, req, res, next);
@@ -65,7 +65,7 @@ const mountPickTweetRoute = (app) => {
   });
 };
 
-const mountPostTweetRoute = (app) => {
+const mountPostTweetRoute = (app: Application) => {
   app.post("/tweet", async (req, res, next) => {
     const client = await connectToDb();
     const user = (await checkUserIdentity(client, req, res, next)) as User;
@@ -83,7 +83,7 @@ const mountPostTweetRoute = (app) => {
   });
 };
 
-const mountTweetRoutes = (app) => {
+const mountTweetRoutes = (app: Application) => {
   mountAllTweetsRoute(app);
   mountPickTweetRoute(app);
   mountPostTweetRoute(app);

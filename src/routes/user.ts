@@ -1,8 +1,9 @@
+import { Application } from "express";
 import checkUserIdentity from "../auth/auth";
 import connectToDb from "../DbUtils/connect";
 import { Tweet } from "../models/Tweet";
 
-const mountUserTweetsRoute = (app) => {
+const mountUserTweetsRoute = (app: Application) => {
   app.get("/user/:userId/tweets", async (req, res, next) => {
     const client = await connectToDb();
 
@@ -44,7 +45,7 @@ const mountUserTweetsRoute = (app) => {
   });
 };
 
-function mountUsersRoute(app) {
+function mountUsersRoute(app: Application) {
   app.get("/users", async (req, res) => {
     const client = await connectToDb();
     const collection = client.db(process.env["DB_NAME"]).collection("Users");
@@ -62,7 +63,7 @@ function mountUsersRoute(app) {
   });
 }
 
-const mountUserRoutes = (app) => {
+const mountUserRoutes = (app: Application) => {
   mountUsersRoute(app);
   mountUserTweetsRoute(app);
 };
