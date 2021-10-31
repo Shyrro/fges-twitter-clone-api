@@ -1,10 +1,9 @@
-import { Router } from "express";
 import checkUserIdentity from "../auth/auth";
 import connectToDb from "../DbUtils/connect";
 import { Tweet } from "../models/Tweet";
 
-const mountUserTweetsRoute = (router: Router) => {
-  router.get("/user/:userId/tweets", async (req, res, next) => {
+const mountUserTweetsRoute = (app) => {
+  app.get("/user/:userId/tweets", async (req, res, next) => {
     const client = await connectToDb();
 
     await checkUserIdentity(client, req, res, next);
@@ -45,8 +44,27 @@ const mountUserTweetsRoute = (router: Router) => {
   });
 };
 
-const mountUserRoutes = (router: Router) => {
-  mountUserTweetsRoute(router);
+function mountUsersRoute(app) {
+  app.get("/users", async (req, res) => {
+    const client = await connectToDb();
+    const collection = client.db(process.env["DB_NAME"]).collection("Users");
+
+    collection.find({}).toArray(function (err, users) {
+      if (err) throw err;
+      const noApiUsers = users.map((user) => {
+        const copyUser = { ...user };
+        delete copyUser.apiKey;
+
+        return copyUser;
+      })
+      return res.json(noApiUsers);
+    });
+  });
+}
+
+const mountUserRoutes = (app) => {
+  mountUsersRoute(app);
+  mountUserTweetsRoute(app);
 };
 
 export default mountUserRoutes;

@@ -1,4 +1,3 @@
-import { Router } from "express";
 import { ObjectId } from "mongodb";
 import checkUserIdentity from "../auth/auth";
 import connectToDb from "../DbUtils/connect";
@@ -6,10 +5,9 @@ import bodyParser from "body-parser";
 import { Tweet, TweetRequest } from "../models/Tweet";
 import User from "../models/User";
 
-const mountAllTweetsRoute = (router: Router) => {
-  router.get("/allTweets", async (req, res, next) => {
+const mountAllTweetsRoute = (app) => {
+  app.get("/allTweets", async (req, res, next) => {
     const client = await connectToDb();
-
     await checkUserIdentity(client, req, res, next);
 
     const allTweetsCollection = client
@@ -41,8 +39,8 @@ const mountAllTweetsRoute = (router: Router) => {
   });
 };
 
-const mountPickTweetRoute = (router: Router) => {
-  router.get("/tweet/:id", async (req, res, next) => {
+const mountPickTweetRoute = (app) => {
+  app.get("/tweet/:id", async (req, res, next) => {
     const client = await connectToDb();
     await checkUserIdentity(client, req, res, next);
 
@@ -67,27 +65,28 @@ const mountPickTweetRoute = (router: Router) => {
   });
 };
 
-const mountPostTweetRoute = (router: Router) => {
-  router.post("/tweet", async (req, res, next) => {
+const mountPostTweetRoute = (app) => {
+  app.post("/tweet", async (req, res, next) => {
     const client = await connectToDb();
     const user = (await checkUserIdentity(client, req, res, next)) as User;
-    const content = req.body;
-    console.log(req.body);
-    content.owner = user._id.toString();
+    const content = {
+      ...req.body,
+      owner: user._id.toString(),
+    }
 
-    await client
+    const dbResponse = await client
       .db(process.env["DB_NAME"])
       .collection("Tweets")
       .insertOne(content);
 
-    return res.json(client);
+    return res.json(dbResponse.insertedId.toString());
   });
 };
 
-const mountTweetRoutes = (router: Router) => {
-  mountAllTweetsRoute(router);
-  mountPickTweetRoute(router);
-  mountPostTweetRoute(router);
+const mountTweetRoutes = (app) => {
+  mountAllTweetsRoute(app);
+  mountPickTweetRoute(app);
+  mountPostTweetRoute(app);
 };
 
 export default mountTweetRoutes;
