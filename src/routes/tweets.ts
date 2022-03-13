@@ -9,6 +9,7 @@ const mountAllTweetsRoute = (app: Application) => {
   app.get("/allTweets", async (req, res, next) => {
     const client = await connectToDb();
     await checkUserIdentity(client, req, res, next);
+    if (res.headersSent) return;
 
     const allTweetsCollection = client
       .db(process.env["DB_NAME"])
@@ -34,7 +35,7 @@ const mountAllTweetsRoute = (app: Application) => {
         };
       });
 
-      return res.json(formattedTweets);
+      return res.send(formattedTweets);
     });
   });
 };
@@ -43,6 +44,7 @@ const mountPickTweetRoute = (app: Application) => {
   app.get("/tweet/:id", async (req, res, next) => {
     const client = await connectToDb();
     await checkUserIdentity(client, req, res, next);
+    if (res.headersSent) return;
 
     const tweetId = req.params.id;
     const tweetsCollection = client
@@ -58,7 +60,7 @@ const mountPickTweetRoute = (app: Application) => {
       _id: new ObjectId(tweetId),
     });
 
-    return res.json({
+    return res.send({
       ...tweet,
       children,
     });
@@ -69,10 +71,11 @@ const mountPostTweetRoute = (app: Application) => {
   app.post("/tweet", async (req, res, next) => {
     const client = await connectToDb();
     const user = (await checkUserIdentity(client, req, res, next)) as User;
+    if (res.headersSent) return;
     const content = {
       ...req.body,
       owner: user._id.toString(),
-    }
+    };
 
     const dbResponse = await client
       .db(process.env["DB_NAME"])

@@ -8,6 +8,8 @@ const mountUserTweetsRoute = (app: Application) => {
     const client = await connectToDb();
 
     await checkUserIdentity(client, req, res, next);
+    if (res.headersSent) return;
+
     const userId = req.params.userId;
     const tweetsCollection = client
       .db(process.env["DB_NAME"])
@@ -40,15 +42,17 @@ const mountUserTweetsRoute = (app: Application) => {
     });
 
     await Promise.all(tweetMapCallback).then(() => {
-      return res.json(result);
+      return res.send(result);
     });
   });
 };
 
 function mountUsersRoute(app: Application) {
-  app.get("/users", async (req, res) => {
+  app.get("/users", async (req, res, next) => {
     const client = await connectToDb();
     const collection = client.db(process.env["DB_NAME"]).collection("Users");
+    await checkUserIdentity(client, req, res, next);
+    if (res.headersSent) return;
 
     collection.find({}).toArray(function (err, users) {
       if (err) throw err;
@@ -58,7 +62,7 @@ function mountUsersRoute(app: Application) {
 
         return copyUser;
       })
-      return res.json(noApiUsers);
+      return res.send(noApiUsers);
     });
   });
 }

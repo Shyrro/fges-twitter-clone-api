@@ -8,6 +8,7 @@ const mountLikesRoute = (app: Application) => {
   app.get("/likes", async (req, res, next) => {
     const client = await connectToDb();
     await checkUserIdentity(client, req, res, next);
+    if (res.headersSent) return;
 
     const likesCollection = client
       .db(process.env["DB_NAME"])
@@ -16,7 +17,7 @@ const mountLikesRoute = (app: Application) => {
     likesCollection.find({}).toArray((err, likes) => {
       if (err) throw err;
 
-      return res.json(likes);
+      return res.send(likes);
     });
   });
 };
@@ -26,6 +27,8 @@ const mountTweetLikesRoute = (app: Application) => {
     const client = await connectToDb();
 
     await checkUserIdentity(client, req, res, next);
+    
+    if (res.headersSent) return;    
     const tweetId = req.params.tweetId;
 
     const likesCollection = client
@@ -35,7 +38,7 @@ const mountTweetLikesRoute = (app: Application) => {
     likesCollection.find<Like>({ tweetId }).toArray((err, likes) => {
       if (err) throw err;
 
-      return res.json(likes);
+      return res.send(likes);
     });
   });
 };
@@ -45,6 +48,9 @@ const mountPostLikeRoute = (app: Application) => {
     const client = await connectToDb();
 
     const user = await checkUserIdentity(client, req, res, next) as User;
+
+    if (res.headersSent) return;
+
     const tweetRequest = {
         tweetId: req.body.tweetId,
         userId: user._id.toString()
@@ -56,7 +62,7 @@ const mountPostLikeRoute = (app: Application) => {
     const insertedResponse = await likesCollection.insertOne(tweetRequest);
 
 
-    return res.json(insertedResponse.insertedId);
+    return res.send(insertedResponse.insertedId);
   });
 };
 
